@@ -1,0 +1,19 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "username/meow_knight"
+
+// Values
+
+// Errors
+
+// Types and methods
+type Direction2
+
+type GameState
+
+type PlayerState
+impl Show for PlayerState
+
+// Type aliases
+
+// Traits
+
