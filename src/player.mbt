@@ -9,15 +9,60 @@ let player_idle_animation : @sprite.Animation = @sprite.Animation::new(
   fps=12,
 )
 
+
+let player_attack_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Attack.png",
+    4,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=false,
+  fps=12
+)
+
 ///|
 let player_run_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Run.png",
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Fall.png",
     10,
     width=120.0,
     height=80.0,
   ),
   loop_=true,
+  fps=12,
+)
+
+let player_fall_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour1/NoOutline/120x80_PNGSheets/_Fall.png",
+    3,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=true,
+  fps=12,
+)
+
+let player_hit_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Hit.png",
+    1,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=true,
+  fps=12,
+)
+
+let player_jump_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Jump.png",
+    3,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=false,
   fps=12,
 )
 
@@ -45,6 +90,7 @@ fn add_player(pos : @math.Vec2D) -> Unit {
 
 ///|
 enum PlayerState {
+  Attack
   Idle
   Hit
   Jump
@@ -96,7 +142,8 @@ fn player_state_system(delta : Double) -> Unit {
         new_velocity_x = MAX_RUN_V
       }
       game_state.direction = Direction2::Right
-    } else {
+    }
+     else {
       new_velocity_x = 0.0
     }
   }
@@ -105,6 +152,17 @@ fn player_state_system(delta : Double) -> Unit {
     Direction2::Right => @math.Transform::new()
   }
   match game_state.player_state {
+    Attack => {
+         @sprite.play_animation(
+          game_state.player,
+          player_attack_animation,
+          transform~,
+        )
+        if @sprite.is_animation_finished(game_state.player) {
+          game_state.player_state = PlayerState::Idle
+        }
+        
+    }
     Idle => {
       if velocity.0[X] == 0.0 {
         @sprite.play_animation(
@@ -130,7 +188,59 @@ fn player_state_system(delta : Double) -> Unit {
           @audio.play_audio("sounds/jump.wav")
         }
       }
+      if @inputs.is_just_pressed(ArrowDown) {
+        game_state.player_state = PlayerState::Attack
+        if game_state.volume_on {
+          @audio.play_audio("sounds/hurt.wav")
+        }
+      }
     }
-    _ => {game_state.player_state = PlayerState::Idle}
+    Fall => {
+     @sprite.play_animation(
+        game_state.player,
+        player_fall_animation,
+        transform~,
+      )
+      if @collision.is_on_floor(game_state.player) {
+        game_state.player_state = PlayerState::Idle
+      }
+    }
+    Jump => {
+      @sprite.play_animation(
+        game_state.player,
+        player_jump_animation,
+        transform~,
+      )
+      if velocity.0[Y] > 0.0 {
+        game_state.player_state = PlayerState::Fall
+      }
+    }
+    Hit => {
+      @sprite.play_animation(
+        game_state.player,
+        player_hit_animation,
+        transform~,
+      )
+      if @collision.is_on_floor(game_state.player) {
+        new_velocity_x = 0.0
+      }
+      if @sprite.is_animation_finished(game_state.player) {
+        if @collision.is_on_floor(game_state.player) {
+          game_state.player_state = PlayerState::Idle
+        } else if velocity.0[Y] < 0.0 {
+          game_state.player_state = PlayerState::Fall
+        } else {
+          game_state.player_state = PlayerState::Jump
+        }
+      }
+    }
   }
+  new_velocity_y += GRAVITY * delta
+  if new_velocity_y > MAX_FALL_V {
+    new_velocity_y = MAX_FALL_V
+  }
+  @velocity.velocities[game_state.player] = @math.Vec2D(
+    new_velocity_x, new_velocity_y,
+  )
 }
+
