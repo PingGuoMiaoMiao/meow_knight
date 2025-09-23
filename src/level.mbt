@@ -4,7 +4,14 @@ let tilemap : Json = {
     "mapHeight": 7,
     "layers": [
         {
-            "name": "Layer_0",
+            "name": "MaskDude",
+            "tiles": [
+                { "id": "0", "x": 5, "y": 31 },
+            ],
+            "collider": false
+        },
+        {
+            "name": "Grass",
             "tiles": [
                 {
                     "id": "45",

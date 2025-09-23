@@ -51,6 +51,8 @@ fn generate_map() -> Unit {
    let world_height = tilemap.map_height.to_double() *
     tilemap.tile_size.to_double()
     @camera.set_limits(top=0.0, bottom=world_height, left=0.0, right=world_width)
+    let mask_dude = tilemap.get_tiles_first("MaskDude")[0]
+    add_player(tile_to_vec2d(mask_dude, tilemap.tile_size))
      let grasses = tilemap.get_tiles("Grass")
     for grass in grasses {
     add_grass(tile_to_vec2d(grass, tilemap.tile_size), grass.id)
