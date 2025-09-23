@@ -1,7 +1,7 @@
 let player_idle_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour1/NoOutline/120x80_PNGSheets/_Idle.png",
-    12,
+    10,
     width=120.0,
     height=80.0,
   ),
@@ -13,7 +13,7 @@ let player_idle_animation : @sprite.Animation = @sprite.Animation::new(
 let player_run_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Run.png",
-    12,
+    10,
     width=120.0,
     height=80.0,
   ),
