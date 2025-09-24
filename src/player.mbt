@@ -1,3 +1,14 @@
+let player_death_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Death.png",
+    10,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=false,
+  fps=12,
+)
+///|
 let player_idle_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour1/NoOutline/120x80_PNGSheets/_Idle.png",
@@ -5,11 +16,33 @@ let player_idle_animation : @sprite.Animation = @sprite.Animation::new(
     width=120.0,
     height=80.0,
   ),
-  loop_=true,
+  loop_=false,
   fps=12,
 )
 
 
+let player_crouch_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_CrouchAll.png",
+    3,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=true,
+  fps=12,
+)
+let player_roll_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Roll.png",
+    12,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=false,
+  fps=12,
+)
+
+///|
 let player_attack_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Attack.png",
@@ -18,7 +51,19 @@ let player_attack_animation : @sprite.Animation = @sprite.Animation::new(
     height=80.0,
   ),
   loop_=false,
-  fps=12
+  fps=12,
+)
+
+///|
+let player_attack2_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Attack2.png",
+    6,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=false,
+  fps=12,
 )
 
 ///|
@@ -33,6 +78,7 @@ let player_run_animation : @sprite.Animation = @sprite.Animation::new(
   fps=12,
 )
 
+///|
 let player_fall_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour1/NoOutline/120x80_PNGSheets/_Fall.png",
@@ -44,6 +90,7 @@ let player_fall_animation : @sprite.Animation = @sprite.Animation::new(
   fps=12,
 )
 
+///|
 let player_hit_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Hit.png",
@@ -51,10 +98,11 @@ let player_hit_animation : @sprite.Animation = @sprite.Animation::new(
     width=120.0,
     height=80.0,
   ),
-  loop_=true,
+  loop_=false,
   fps=12,
 )
 
+///|
 let player_jump_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Jump.png",
@@ -90,18 +138,21 @@ fn add_player(pos : @math.Vec2D) -> Unit {
 
 ///|
 enum PlayerState {
+  Death
   Attack
   Idle
   Hit
   Jump
+  Roll
   Fall
+  Crouch
 } derive(Show)
 
 ///|
 const GRAVITY = 1800.0
 
 ///|
-const MAX_RUN_V = 20.0
+const MAX_RUN_V = 240.0
 
 ///|
 const JUMP_V = 680.0
@@ -110,7 +161,7 @@ const JUMP_V = 680.0
 const MAX_FALL_V = 900.0
 
 ///|
-const RUN_ACC = 100.0
+const RUN_ACC = 3600.0
 
 ///|
 const BUMP_V : Double = JUMP_V / 2.0
@@ -134,8 +185,9 @@ fn player_collision_system(_delta : Double) -> Unit {
   }
 }
 
+///|
 fn player_state_system(delta : Double) -> Unit {
- let velocity = @collision.real_velocities
+  let velocity = @collision.real_velocities
     .get(game_state.player)
     .unwrap_or(@math.Vec2D::zero())
   let mut new_velocity_x = velocity.0[X]
@@ -153,8 +205,7 @@ fn player_state_system(delta : Double) -> Unit {
         new_velocity_x = MAX_RUN_V
       }
       game_state.direction = Direction2::Right
-    }
-     else {
+    } else {
       new_velocity_x = 0.0
     }
   }
@@ -163,16 +214,56 @@ fn player_state_system(delta : Double) -> Unit {
     Direction2::Right => @math.Transform::new()
   }
   match game_state.player_state {
+    Death => {
+      @sprite.play_animation(
+        game_state.player,
+        player_death_animation,
+        transform~,
+      )
+      if @sprite.is_animation_finished(game_state.player) {
+        if game_state.volume_on {
+          @audio.play_audio("sounds/death.wav")
+        }
+      }
+    }
+    Crouch => {
+      @sprite.play_animation(
+        game_state.player,
+        player_crouch_animation,
+        transform~,
+      )
+      if !@inputs.is_pressed(ArrowDown) {
+        game_state.player_state = PlayerState::Idle
+      }
+    }
+    Roll => {
+      @sprite.play_animation(
+        game_state.player,
+        player_roll_animation,
+        transform~,
+      )
+      if @sprite.is_animation_finished(game_state.player) {
+        game_state.player_state = PlayerState::Idle
+      }
+    }
     Attack => {
-         @sprite.play_animation(
+      if game_state.attack_hit_count == 1 {
+        @sprite.play_animation(
           game_state.player,
           player_attack_animation,
           transform~,
         )
-        if @sprite.is_animation_finished(game_state.player) {
-          game_state.player_state = PlayerState::Idle
-        }
-        
+      } else if game_state.attack_hit_count == 2 {
+        @sprite.play_animation(
+          game_state.player,
+          player_attack2_animation,
+          transform~,
+        )
+        game_state.attack_hit_count = 0
+      }
+      if @sprite.is_animation_finished(game_state.player) {
+        game_state.player_state = PlayerState::Idle
+      }
     }
     Idle => {
       if velocity.0[X] == 0.0 {
@@ -200,14 +291,27 @@ fn player_state_system(delta : Double) -> Unit {
         }
       }
       if @inputs.is_just_pressed(ArrowDown) {
+        game_state.roll_count += 1
+        if game_state.roll_count == 1 {
+          game_state.player_state = PlayerState::Crouch
+        } else if game_state.roll_count == 2 {
+          game_state.player_state = PlayerState::Roll
+          if game_state.volume_on {
+            @audio.play_audio("sounds/roll.wav")
+          }
+          game_state.roll_count = 0
+        }
+      }
+      if @inputs.is_just_pressed(KeyJ) {
         game_state.player_state = PlayerState::Attack
+        game_state.attack_hit_count += 1
         if game_state.volume_on {
           @audio.play_audio("sounds/hurt.wav")
         }
       }
     }
     Fall => {
-     @sprite.play_animation(
+      @sprite.play_animation(
         game_state.player,
         player_fall_animation,
         transform~,
@@ -254,4 +358,3 @@ fn player_state_system(delta : Double) -> Unit {
     new_velocity_x, new_velocity_y,
   )
 }
-

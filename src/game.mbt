@@ -10,28 +10,44 @@ struct GameState {
   volume_on : Bool
   mut health : Int
   mut hurt_timer : Double
+  mut attack_hit_count : Int
+  mut roll_count : Int
 }
 
+///|
 let game_state : GameState = {
   player: @system.Entity::new(),
   player_state: PlayerState::Idle,
-  score : 0,
-  result_box: @sprite.Text::new("", font="24px ThaleahFat",),
-  score_box: @sprite.Text::new("Score: 0", font="20x ThaleahFat",color="#ffffff",),
-  health_box: @sprite.Text::new("Health: 3", font="20px ThaleahFat",color="#ffffff",),
+  score: 0,
+  result_box: @sprite.Text::new("", font="24px ThaleahFat"),
+  score_box: @sprite.Text::new(
+    "Score: 0",
+    font="20x ThaleahFat",
+    color="#ffffff",
+  ),
+  health_box: @sprite.Text::new(
+    "Health: 3",
+    font="20px ThaleahFat",
+    color="#ffffff",
+  ),
   direction: Direction2::Right,
   volume_on: true,
   health: 3,
   hurt_timer: 0.0,
+  attack_hit_count: 0,
+  roll_count: 0,
 }
 
+///|
 enum Direction2 {
   Left
   Right
 }
+
 ///|
 const ATTACK_V : Double = 180.0
 
+///|
 fn hurt_player() -> Unit {
   if game_state.hurt_timer <= 0.0 {
     let back_vel = match game_state.direction {

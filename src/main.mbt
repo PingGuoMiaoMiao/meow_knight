@@ -1,4 +1,7 @@
+///|
 const ZOOM : Double = 2.0
+
+///|
 fn main {
   @system.App::new()
   .with_canvas_width(480.0)
@@ -10,9 +13,10 @@ fn main {
   .add_system(game_start, schedule=Startup)
   .add_system(player_state_system)
   .add_system(player_collision_system)
-  .run();
+  .run()
 }
 
+///|
 fn game_start(_delta : Double) -> Unit {
   generate_map()
 }

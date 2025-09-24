@@ -1,9 +1,9 @@
 ///|
 fn add_grass(pos : @math.Vec2D, sprite_id : String) -> Unit {
   let src_pos = match sprite_id {
-    "0" => @math.Vec2D(16.0 * 0,16.0 * 0)
-    "1"=> @math.Vec2D(16.0 * 1,16.0 * 0)
-    "2"=> @math.Vec2D(16.0 * 2,16.0 * 0)
+    "0" => @math.Vec2D(16.0 * 0, 16.0 * 0)
+    "1" => @math.Vec2D(16.0 * 1, 16.0 * 0)
+    "2" => @math.Vec2D(16.0 * 2, 16.0 * 0)
     _ => panic()
   }
   let sprite = @sprite.Sprite::from_animation(
@@ -51,4 +51,3 @@ fn generate_map() -> Unit {
     add_enemy(tile_to_vec2d(skeleton, tilemap.tile_size))
   }
 }
-
