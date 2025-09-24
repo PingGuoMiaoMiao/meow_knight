@@ -29,7 +29,7 @@ let player_run_animation : @sprite.Animation = @sprite.Animation::new(
     width=120.0,
     height=80.0,
   ),
-  loop_=true,
+  loop_=false,
   fps=12,
 )
 
@@ -40,7 +40,7 @@ let player_fall_animation : @sprite.Animation = @sprite.Animation::new(
     width=120.0,
     height=80.0,
   ),
-  loop_=true,
+  loop_=false,
   fps=12,
 )
 
@@ -101,7 +101,7 @@ enum PlayerState {
 const GRAVITY = 1800.0
 
 ///|
-const MAX_RUN_V = 240.0
+const MAX_RUN_V = 20.0
 
 ///|
 const JUMP_V = 680.0
@@ -110,7 +110,7 @@ const JUMP_V = 680.0
 const MAX_FALL_V = 900.0
 
 ///|
-const RUN_ACC = 3600.0
+const RUN_ACC = 100.0
 
 ///|
 const BUMP_V : Double = JUMP_V / 2.0
@@ -121,6 +121,17 @@ fn player_collision_system(_delta : Double) -> Unit {
     game_state.hurt_timer -= 1.0
   }
   let player_collision = @collision.get_collision_infos(game_state.player)
+  for collision in player_collision {
+    if skeletons.get(collision.entity) is Some(skeleton) {
+      if collision.direction[Y] > 0.0 {
+        skeleton.is_hurt = true
+        guard @velocity.velocities.get(game_state.player) is Some(velocity)
+        @velocity.velocities[game_state.player] = velocity.0.update(Y, -BUMP_V)
+      } else {
+        hurt_player()
+      }
+    }
+  }
 }
 
 fn player_state_system(delta : Double) -> Unit {

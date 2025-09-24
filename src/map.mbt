@@ -34,17 +34,21 @@ fn tile_to_vec2d(tile : @tilemap.Tile, tile_size : Int) -> @math.Vec2D {
 
 ///|
 fn generate_map() -> Unit {
-   let tilemap = @tilemap.TileMap::from_json(tilemap)
-   let world_width = tilemap.map_width.to_double() *
+  let tilemap = @tilemap.TileMap::from_json(tilemap)
+  let world_width = tilemap.map_width.to_double() *
     tilemap.tile_size.to_double()
-   let world_height = tilemap.map_height.to_double() *
+  let world_height = tilemap.map_height.to_double() *
     tilemap.tile_size.to_double()
-    @camera.set_limits(top=0.0, bottom=world_height, left=0.0, right=world_width)
+  @camera.set_limits(top=0.0, bottom=world_height, left=0.0, right=world_width)
   let mask_dude = tilemap.get_tiles_first("Role")[0]
   add_player(tile_to_vec2d(mask_dude, tilemap.tile_size))
-     let grasses = tilemap.get_tiles("Grass")
-    for grass in grasses {
+  let grasses = tilemap.get_tiles("Grass")
+  for grass in grasses {
     add_grass(tile_to_vec2d(grass, tilemap.tile_size), grass.id)
+  }
+  let skeletons = tilemap.get_tiles_first("Enemy")
+  for skeleton in skeletons {
+    add_enemy(tile_to_vec2d(skeleton, tilemap.tile_size))
   }
 }
 

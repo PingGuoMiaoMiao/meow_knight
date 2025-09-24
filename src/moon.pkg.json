@@ -12,7 +12,8 @@
     "Milky2018/selene/tilemap",
     "Milky2018/selene/camera",
     "Milky2018/selene/ui",
-    "Milky2018/selene/inputs"
+    "Milky2018/selene/inputs",
+    "Yoorkin/rabbit-tea/variant"
   ],
   "overrides": [
     "Milky2018/selene-canvas"
