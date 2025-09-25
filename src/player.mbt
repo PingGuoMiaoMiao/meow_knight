@@ -1,8 +1,40 @@
+let player_death_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Death.png",
+    10,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=false,
+  fps=12,
+)
 ///|
 let player_idle_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour1/NoOutline/120x80_PNGSheets/_Idle.png",
     10,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=false,
+  fps=12,
+)
+
+
+let player_crouch_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_CrouchAll.png",
+    3,
+    width=120.0,
+    height=80.0,
+  ),
+  loop_=true,
+  fps=12,
+)
+let player_roll_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Roll.png",
+    12,
     width=120.0,
     height=80.0,
   ),
@@ -66,7 +98,7 @@ let player_hit_animation : @sprite.Animation = @sprite.Animation::new(
     width=120.0,
     height=80.0,
   ),
-  loop_=true,
+  loop_=false,
   fps=12,
 )
 
@@ -106,11 +138,14 @@ fn add_player(pos : @math.Vec2D) -> Unit {
 
 ///|
 enum PlayerState {
+  Death
   Attack
   Idle
   Hit
   Jump
+  Roll
   Fall
+  Crouch
 } derive(Show)
 
 ///|
@@ -179,6 +214,38 @@ fn player_state_system(delta : Double) -> Unit {
     Direction2::Right => @math.Transform::new()
   }
   match game_state.player_state {
+    Death => {
+      @sprite.play_animation(
+        game_state.player,
+        player_death_animation,
+        transform~,
+      )
+      if @sprite.is_animation_finished(game_state.player) {
+        if game_state.volume_on {
+          @audio.play_audio("sounds/death.wav")
+        }
+      }
+    }
+    Crouch => {
+      @sprite.play_animation(
+        game_state.player,
+        player_crouch_animation,
+        transform~,
+      )
+      if !@inputs.is_pressed(ArrowDown) {
+        game_state.player_state = PlayerState::Idle
+      }
+    }
+    Roll => {
+      @sprite.play_animation(
+        game_state.player,
+        player_roll_animation,
+        transform~,
+      )
+      if @sprite.is_animation_finished(game_state.player) {
+        game_state.player_state = PlayerState::Idle
+      }
+    }
     Attack => {
       if game_state.attack_hit_count == 1 {
         @sprite.play_animation(
@@ -224,6 +291,18 @@ fn player_state_system(delta : Double) -> Unit {
         }
       }
       if @inputs.is_just_pressed(ArrowDown) {
+        game_state.roll_count += 1
+        if game_state.roll_count == 1 {
+          game_state.player_state = PlayerState::Crouch
+        } else if game_state.roll_count == 2 {
+          game_state.player_state = PlayerState::Roll
+          if game_state.volume_on {
+            @audio.play_audio("sounds/roll.wav")
+          }
+          game_state.roll_count = 0
+        }
+      }
+      if @inputs.is_just_pressed(KeyJ) {
         game_state.player_state = PlayerState::Attack
         game_state.attack_hit_count += 1
         if game_state.volume_on {

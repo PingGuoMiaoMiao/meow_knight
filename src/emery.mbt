@@ -39,7 +39,7 @@ let skeleton_attack_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "asserts/Skeleton/Attack.png",
     8,
-    width=120,
+    width=100,
     height=150,
   ),
   loop_=false,

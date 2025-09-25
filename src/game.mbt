@@ -11,6 +11,7 @@ struct GameState {
   mut health : Int
   mut hurt_timer : Double
   mut attack_hit_count : Int
+  mut roll_count : Int
 }
 
 ///|
@@ -34,6 +35,7 @@ let game_state : GameState = {
   health: 3,
   hurt_timer: 0.0,
   attack_hit_count: 0,
+  roll_count: 0,
 }
 
 ///|
