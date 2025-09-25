@@ -12,6 +12,7 @@ struct GameState {
   mut hurt_timer : Double
   mut attack_hit_count : Int
   mut roll_count : Int
+  mut roll_cooldown : Double
 }
 
 ///|
@@ -36,6 +37,7 @@ let game_state : GameState = {
   hurt_timer: 0.0,
   attack_hit_count: 0,
   roll_count: 0,
+  roll_cooldown: 0.0,
 }
 
 ///|

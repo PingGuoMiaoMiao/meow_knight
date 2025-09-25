@@ -32,6 +32,8 @@ fn tile_to_vec2d(tile : @tilemap.Tile, tile_size : Int) -> @math.Vec2D {
   )
 }
 
+
+
 ///|
 fn generate_map() -> Unit {
   let tilemap = @tilemap.TileMap::from_json(tilemap)
