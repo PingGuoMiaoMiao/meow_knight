@@ -13,6 +13,7 @@ fn main {
   .add_system(game_start, schedule=Startup)
   .add_system(player_state_system)
   .add_system(player_collision_system)
+  .add_system(enemy_collision_system)
   .run()
 }
 

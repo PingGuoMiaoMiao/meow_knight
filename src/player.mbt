@@ -1,3 +1,4 @@
+///|
 let player_death_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Death.png",
@@ -8,6 +9,7 @@ let player_death_animation : @sprite.Animation = @sprite.Animation::new(
   loop_=false,
   fps=12,
 )
+
 ///|
 let player_idle_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
@@ -20,7 +22,7 @@ let player_idle_animation : @sprite.Animation = @sprite.Animation::new(
   fps=12,
 )
 
-
+///|
 let player_crouch_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour2/NoOutline/120x80_PNGSheets/_CrouchAll.png",
@@ -31,6 +33,8 @@ let player_crouch_animation : @sprite.Animation = @sprite.Animation::new(
   loop_=true,
   fps=12,
 )
+
+///|
 let player_roll_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Roll.png",
@@ -193,13 +197,14 @@ fn player_state_system(delta : Double) -> Unit {
   let mut new_velocity_x = velocity.0[X]
   let mut new_velocity_y = velocity.0[Y]
   if !(game_state.player_state is Hit) {
-    if @inputs.is_pressed(@inputs.ArrowLeft) {
+    if @inputs.is_pressed(@inputs.ArrowLeft) || @inputs.is_pressed(@inputs.KeyA) {
       new_velocity_x -= RUN_ACC * delta
       if new_velocity_x < -MAX_RUN_V {
         new_velocity_x = -MAX_RUN_V
       }
       game_state.direction = Direction2::Left
-    } else if @inputs.is_pressed(@inputs.ArrowRight) {
+    } else if @inputs.is_pressed(@inputs.ArrowRight) ||
+      @inputs.is_pressed(@inputs.KeyD) {
       new_velocity_x += RUN_ACC * delta
       if new_velocity_x > MAX_RUN_V {
         new_velocity_x = MAX_RUN_V
@@ -232,7 +237,7 @@ fn player_state_system(delta : Double) -> Unit {
         player_crouch_animation,
         transform~,
       )
-      if !@inputs.is_pressed(ArrowDown) {
+      if !@inputs.is_pressed(ArrowDown) || !@inputs.is_pressed(KeyS) {
         game_state.player_state = PlayerState::Idle
       }
     }
@@ -282,7 +287,7 @@ fn player_state_system(delta : Double) -> Unit {
       if velocity.0[Y] > 0.0 {
         game_state.player_state = PlayerState::Fall
       }
-      if @inputs.is_just_pressed(ArrowUp) &&
+      if (@inputs.is_just_pressed(ArrowUp) || @inputs.is_just_pressed(KeyW)) &&
         @collision.is_on_floor(game_state.player) {
         new_velocity_y = -JUMP_V
         game_state.player_state = PlayerState::Jump
@@ -290,7 +295,7 @@ fn player_state_system(delta : Double) -> Unit {
           @audio.play_audio("sounds/jump.wav")
         }
       }
-      if @inputs.is_just_pressed(ArrowDown) {
+      if @inputs.is_just_pressed(ArrowDown) || @inputs.is_just_pressed(KeyS) {
         game_state.roll_count += 1
         if game_state.roll_count == 1 {
           game_state.player_state = PlayerState::Crouch
