@@ -1,3 +1,13 @@
+let player_magic_attack_animation : @sprite.Animation = @sprite.Animation::new(
+  @sprite.frames_from_atlas(
+    "asserts/Effect and FX Pixel Part 12 Free/566.png",
+    13,
+    width=64.0,
+    height=64.0,
+  ),
+  loop_=false,
+  fps=2,
+)
 ///|
 let player_death_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
@@ -150,6 +160,8 @@ enum PlayerState {
   Roll
   Fall
   Crouch
+  MagicAttack
+  
 } derive(Show)
 
 ///|
@@ -188,6 +200,26 @@ let attack_state : AttackState = {
   attack_timer: 0.0,
   has_hit: false
 }
+
+///|
+struct MagicProjectile {
+  entity : @system.Entity
+  mut timer : Double
+  damage : Int
+  direction : Direction2
+}
+
+///|
+let magic_projectiles : Map[@system.Entity, MagicProjectile] = Map::new()
+
+///|
+const MAGIC_SPEED = 400.0  // 魔法弹丸飞行速度
+
+///|
+const MAGIC_DAMAGE = 30  // 魔法弹丸伤害
+
+///|
+const MAGIC_LIFETIME = 180.0  // 魔法弹丸存在时间（3秒）
 
 /// 开始攻击 - 设置攻击状态
 ///|
@@ -330,6 +362,130 @@ fn check_attack_collision() -> Unit {
   println("❌ 攻击范围内没有敌人")
 }
 
+/// 创建魔法弹丸
+///|
+fn create_magic_projectile() -> Unit {
+  println("✨ 创建魔法弹丸！")
+  
+  // 获取玩家位置
+  let player_pos = @position.positions.get(game_state.player).unwrap_or(@math.Vec2D::zero())
+  
+  // 创建弹丸实体
+  let projectile_entity = @system.Entity::new()
+  
+  // 设置弹丸位置（从玩家前方发射）
+  let projectile_pos = match game_state.direction {
+    Direction2::Right => @math.Vec2D(player_pos.0[X] + 80.0, player_pos.0[Y] + 20.0)
+    Direction2::Left => @math.Vec2D(player_pos.0[X] - 80.0, player_pos.0[Y] + 20.0)
+  }
+  
+  // 设置弹丸速度
+  let projectile_velocity = match game_state.direction {
+    Direction2::Right => @math.Vec2D(MAGIC_SPEED, 0.0)
+    Direction2::Left => @math.Vec2D(-MAGIC_SPEED, 0.0)
+  }
+  
+  // 设置弹丸动画和属性
+  let projectile_sprite = @sprite.Sprite::from_animation(player_magic_attack_animation, 10)
+  @sprite.sprites.set(projectile_entity, projectile_sprite)
+  @position.positions.set(projectile_entity, projectile_pos)
+  @velocity.velocities.set(projectile_entity, projectile_velocity)
+  
+  // 设置弹丸碰撞检测
+  @collision.shapes.set(
+    projectile_entity,
+    Rect(size=@math.Vec2D(32.0, 32.0), offset=@math.Vec2D(0.0, 0.0))
+  )
+  @collision.collision_layers.set(projectile_entity, player_collision_layer)
+  @collision.colliders.set(
+    projectile_entity,
+    @collision.Collider::new(
+      @collision.CollisionMask::new([enemy_collision_layer, terrain_collision_layer])
+    )
+  )
+  
+  // 添加到弹丸管理列表
+  magic_projectiles[projectile_entity] = {
+    entity: projectile_entity,
+    timer: MAGIC_LIFETIME,
+    damage: MAGIC_DAMAGE,
+    direction: game_state.direction
+  }
+  
+  println("✅ 魔法弹丸创建完成！")
+}
+
+/// 更新魔法弹丸系统
+///|
+fn update_magic_projectiles(_delta : Double) -> Unit {
+  let to_remove : Array[@system.Entity] = []
+  
+  for entity, projectile in magic_projectiles {
+    // 检查弹丸是否还存活
+    if !entity.is_alive() {
+      to_remove.push(entity)
+      continue
+    }
+    
+    // 减少生存时间
+    projectile.timer -= 1.0
+    if projectile.timer <= 0.0 {
+      println("⏰ 魔法弹丸生存时间到，销毁")
+      entity.destroy()
+      to_remove.push(entity)
+      continue
+    }
+    
+    // 检测弹丸与敌人的碰撞
+    let projectile_collisions = @collision.get_collision_infos(entity)
+    for collision in projectile_collisions {
+      if skeletons.get(collision.entity) is Some(skeleton) {
+        if skeleton.hurt_timer <= 0.0 {
+          println("💥 魔法弹丸击中骷髅！")
+          
+          // 对骷髅造成伤害
+          skeleton.is_hurt = true
+          skeleton.hurt_timer = 60.0
+          skeleton.health -= projectile.damage
+          
+          println("✨ 骷髅受到魔法伤害: " + projectile.damage.to_string())
+          println("💖 骷髅血量: " + skeleton.health.to_string())
+          
+          // 给骷髅一个击退效果
+          let knockback = match projectile.direction {
+            Direction2::Right => @math.Vec2D(80.0, -30.0)
+            Direction2::Left => @math.Vec2D(-80.0, -30.0)
+          }
+          @velocity.velocities[collision.entity] = knockback
+          
+          if skeleton.health <= 0 {
+            println("💀 骷髅被魔法击杀！")
+          }
+          
+          if game_state.volume_on {
+            @audio.play_audio("sounds/hurt.wav")
+          }
+          
+          // 销毁弹丸
+          entity.destroy()
+          to_remove.push(entity)
+          break
+        }
+      } else if collision.entity != game_state.player { // 撞到地形或其他物体
+        println("💥 魔法弹丸撞到障碍物")
+        entity.destroy()
+        to_remove.push(entity)
+        break
+      }
+    }
+  }
+  
+  // 清理已销毁的弹丸
+  for entity in to_remove {
+    magic_projectiles.remove(entity)
+  }
+}
+
 ///|
 fn player_collision_system(_delta : Double) -> Unit {
   if game_state.hurt_timer > 0.0 {
@@ -343,6 +499,9 @@ fn player_collision_system(_delta : Double) -> Unit {
   
   // 更新攻击系统
   update_attack_system(_delta)
+  
+  // 更新魔法弹丸系统
+  update_magic_projectiles(_delta)
   
   let player_collision = @collision.get_collision_infos(game_state.player)
   for collision in player_collision {
@@ -474,6 +633,16 @@ fn player_state_system(delta : Double) -> Unit {
         game_state.player_state = PlayerState::Idle
       }
     }
+    MagicAttack => {
+      @sprite.play_animation(
+        game_state.player,
+        player_attack_animation, // 使用普通攻击动画作为魔法攻击动画
+        transform~,
+      )
+      if @sprite.is_animation_finished(game_state.player) {
+        game_state.player_state = PlayerState::Idle
+      }
+    }
     Idle => {
       if velocity.0[X] == 0.0 {
         @sprite.play_animation(
@@ -531,6 +700,17 @@ fn player_state_system(delta : Double) -> Unit {
         
         if game_state.volume_on {
           @audio.play_audio("sounds/jump.wav") // 用跳跃音效来标识攻击开始
+        }
+      }
+      if @inputs.is_just_pressed(KeyK) {
+        println("✨✨✨ 检测到K键按下！魔法攻击！✨✨✨")
+        game_state.player_state = PlayerState::MagicAttack
+        
+        // 创建魔法弹丸
+        create_magic_projectile()
+        
+        if game_state.volume_on {
+          @audio.play_audio("sounds/power_up.wav") // 用能量音效来标识魔法攻击
         }
       }
     }
