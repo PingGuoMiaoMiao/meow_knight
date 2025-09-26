@@ -1,10 +1,10 @@
 ///|
 let skeleton_idle_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "asserts/Skeleton/Idle.png",
+    "asserts/Monsters_Creatures_Fantasy/Skeleton/Idle.png",
     4,
-    width=120,
-    height=150,
+    width=105,
+    height=210,
   ),
   loop_=true,
   fps=12,
@@ -13,10 +13,10 @@ let skeleton_idle_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let skeleton_walk_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "asserts/Skeleton/Walk.png",
+    "asserts/Monsters_Creatures_Fantasy/Skeleton/Walk.png",
     4,
-    width=120,
-    height=150,
+    width=105,
+    height=210,
   ),
   loop_=true,
   fps=12,
@@ -25,22 +25,22 @@ let skeleton_walk_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let skeleton_death_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "asserts/Skeleton/Death.png",
+    "asserts/Monsters_Creatures_Fantasy/Skeleton/Death.png",
     4,
-    width=120,
-    height=150,
+    width=105,
+    height=210,
   ),
   loop_=false,
-  fps=12,
+  fps=1,
 )
 
 ///|
 let skeleton_attack_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "asserts/Skeleton/Attack.png",
+    "asserts/Monsters_Creatures_Fantasy/Skeleton/Attack.png",
     8,
-    width=120,
-    height=150,
+    width=105,
+    height=210,
   ),
   loop_=false,
   fps=12,
@@ -49,10 +49,10 @@ let skeleton_attack_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let skeleton_shield_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "asserts/Skeleton/Shield.png",
+    "asserts/Monsters_Creatures_Fantasy/Skeleton/Shield.png",
     4,
-    width=120,
-    height=150,
+    width=105,
+    height=210,
   ),
   loop_=false,
   fps=12,
@@ -61,17 +61,17 @@ let skeleton_shield_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let skeleton_take_hit_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "asserts/Skeleton/Take Hit.png",
+    "asserts/Monsters_Creatures_Fantasy/Skeleton/TakeHit.png",
     4,
-    width=120,
-    height=150,
+    width=105,
+    height=210,
   ),
   loop_=false,
-  fps=12,
+  fps=1,
 )
 
 ///|
-const SKELETON_SPEED = 0.0
+const SKELETON_SPEED = 10.0
 
 ///|
 struct Skeleton {
@@ -80,6 +80,8 @@ struct Skeleton {
   mut direction : Direction2
   mut is_hurt : Bool
   mut hurt_timer : Double
+  mut state : SkeletonState
+  mut idle_timer : Double
 }
 
 ///|
@@ -102,11 +104,11 @@ fn add_enemy(pos : @math.Vec2D) -> Unit {
     skeleton_idle_animation, 10,
   )
   @sprite.sprites.set(entity, skeleton_sprite)
-  @velocity.velocities.set(entity, @math.Vec2D(SKELETON_SPEED, 0.0))
+  @velocity.velocities.set(entity, @math.Vec2D::zero()) // 初始速度为0，静止状态
   @position.positions.set(entity, pos)
   @collision.shapes.set(
     entity,
-    Rect(size=@math.Vec2D(120.0, 80.0), offset=@math.Vec2D(70.0, -5.0)),
+    Rect(size=@math.Vec2D(120.0, 80.0), offset=@math.Vec2D(70.0, 0.0)),
   )
   @collision.collision_layers.set(entity, enemy_collision_layer)
   @collision.colliders.set(
@@ -121,149 +123,62 @@ fn add_enemy(pos : @math.Vec2D) -> Unit {
     direction: Direction2::Left,
     is_hurt: false,
     hurt_timer: 0.0,
+    state: SkeletonState::Idle,
+    idle_timer: 0.0,
   }
 }
 
-///|
-fn hurt_enemy_on_player_attack() -> Unit {
-  // 玩家攻击时，敌人在受击范围内则受伤
-  let is_player_attacking = game_state.player_state is PlayerState::Attack
-  if !is_player_attacking {
-    return
-  }
-  let player_pos = @position.positions.get(game_state.player).unwrap_or(@math.Vec2D::zero())
-  for e, skeleton in skeletons {
-    guard e.is_alive() else { continue }
-    let enemy_pos = @position.positions.get(e).unwrap_or(@math.Vec2D::zero())
-    let hurt_range = 80.0
-    let dx = (player_pos.0[X] - enemy_pos.0[X]).abs()
-    let dy = (player_pos.0[Y] - enemy_pos.0[Y]).abs()
-    if dx < hurt_range && dy < 60.0 {
-      if !skeleton.is_hurt {
-        skeleton.health -= 50
-        skeleton.is_hurt = true
-        skeleton.hurt_timer = 30.0
-        if skeleton.health <= 0 {
-          skeleton.health = 0
-        }
-        // 播放受击动画
-        match skeleton.direction {
-          Left =>
-            @sprite.play_animation(
-              e,
-              skeleton_take_hit_animation,
-              transform=@math.Transform::new(),
-            )
-          Right =>
-            @sprite.play_animation(
-              e,
-              skeleton_take_hit_animation,
-              transform=@math.Transform::flip_x(32.0),
-            )
-        }
-      }
-    }
-  }
-}
 
+/// 静态骷髅AI - 怪物不移动，只处理受伤和死亡
 ///|
-fn enemy_collision_system(_delta : Double) -> Unit {
-  // 处理敌人碰撞地面
+fn skeleton_ai_system(_delta : Double) -> Unit {
   for e, skeleton in skeletons {
     guard e.is_alive() else { continue }
-    let collision_infos = @collision.get_collision_infos(e)
-    for info in collision_infos {
-      if info.direction[Y] < 0.0 {
-        // 敌人碰到地面
-        @velocity.velocities[e] = @velocity.velocities[e].0.update(Y, 0.0)
-      }
-    }
-    // 处理敌人受伤计时
-    if skeleton.is_hurt {
+    
+    // 更新受伤计时器
+    if skeleton.hurt_timer > 0.0 {
       skeleton.hurt_timer -= 1.0
-      if skeleton.hurt_timer <= 0.0 {
-        skeleton.is_hurt = false
-        skeleton.hurt_timer = 0.0
-      }
     }
-  }
-}
-
-///|
-fn skeleton_ai_system(_ : Double) -> Unit {
-  for e, skeleton in skeletons {
-    guard e.is_alive() else { continue }
-    guard @velocity.velocities.get(e) is Some(_velocity)
-    if @sprite.is_animation_finished(e) {
-      e.destroy()
-      continue
-    }
-    if skeleton.is_hurt {
+    
+    // 死亡状态
+    if skeleton.health <= 0 {
+      skeleton.state = SkeletonState::Death
       @velocity.velocities[e] = @math.Vec2D::zero()
-      if skeleton.health == 0 {
-        @collision.collision_layers.remove(e)
-        match skeleton.direction {
-          Left =>
-            @sprite.play_animation(
-              e,
-              skeleton_death_animation,
-              transform=@math.Transform::new(),
-            )
-          Right =>
-            @sprite.play_animation(
-              e,
-              skeleton_death_animation,
-              transform=@math.Transform::flip_x(32.0),
-            )
-        }
-      } else {
-        match skeleton.direction {
-          Left =>
-            @sprite.play_animation(
-              e,
-              skeleton_take_hit_animation,
-              transform=@math.Transform::new(),
-            )
-          Right =>
-            @sprite.play_animation(
-              e,
-              skeleton_take_hit_animation,
-              transform=@math.Transform::flip_x(32.0),
-            )
-        }
+      @collision.collision_layers.remove(e)
+      @sprite.play_animation(
+        e,
+        skeleton_death_animation,
+        transform=@math.Transform::new()
+      )
+      if @sprite.is_animation_finished(e) {
+        e.destroy()
+        skeletons.remove(e)
       }
       continue
     }
-    let collision_infos = @collision.get_collision_infos(e)
-    let hit_wall = collision_infos
-      .iter()
-      .any(fn(info) {
-        (info.direction[X] > 0.0 && skeleton.direction is Right) ||
-        (info.direction[X] < 0.0 && skeleton.direction is Left)
-      })
-    if hit_wall {
-      skeleton.direction = match skeleton.direction {
-        Left => Right
-        Right => Left
-      }
+    
+    // 受伤状态
+    if skeleton.is_hurt && skeleton.hurt_timer > 0.0 {
+      skeleton.state = SkeletonState::TakeHit
+      @velocity.velocities[e] = @math.Vec2D::zero()
+      @sprite.play_animation(
+        e,
+        skeleton_take_hit_animation,
+        transform=@math.Transform::new()
+      )
+      continue
+    } else if skeleton.is_hurt && skeleton.hurt_timer <= 0.0 {
+      // 受伤状态结束，回到待机
+      skeleton.is_hurt = false
+      skeleton.state = SkeletonState::Idle
     }
-    match skeleton.direction {
-      Left => {
-        @velocity.velocities[e] = @math.Vec2D(-SKELETON_SPEED, 0.0)
-        @sprite.play_animation(
-          e,
-          skeleton_idle_animation,
-          transform=@math.Transform::new(),
-        )
-      }
-      Right => {
-        @velocity.velocities[e] = @math.Vec2D(SKELETON_SPEED, 0.0)
-        @sprite.play_animation(
-          e,
-          skeleton_take_hit_animation,
-          transform=@math.Transform::flip_x(32.0),
-        )
-      }
-    }
+    
+    // 默认状态：静止播放待机动画
+    @velocity.velocities[e] = @math.Vec2D::zero()
+    @sprite.play_animation(
+      e,
+      skeleton_idle_animation,
+      transform=@math.Transform::new()
+    )
   }
 }
