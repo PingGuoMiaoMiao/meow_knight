@@ -156,7 +156,7 @@ enum PlayerState {
 const GRAVITY = 1800.0
 
 ///|
-const MAX_RUN_V = 240.0
+const MAX_RUN_V = 160.0  // 降低最大跑步速度从240到160
 
 ///|
 const JUMP_V = 680.0
@@ -165,10 +165,13 @@ const JUMP_V = 680.0
 const MAX_FALL_V = 900.0
 
 ///|
-const RUN_ACC = 3600.0
+const RUN_ACC = 2400.0  // 降低加速度从3600到2400，让移动更平滑
 
 ///|
 const BUMP_V : Double = JUMP_V / 2.0
+
+///|
+const ROLL_SPEED = 300.0  // 翻滚时的前进速度
 
 ///|
 struct AttackState {
@@ -333,6 +336,11 @@ fn player_collision_system(_delta : Double) -> Unit {
     game_state.hurt_timer -= 1.0
   }
   
+  // 更新翻滚冷却时间
+  if game_state.roll_cooldown > 0.0 {
+    game_state.roll_cooldown -= 1.0
+  }
+  
   // 更新攻击系统
   update_attack_system(_delta)
   
@@ -342,13 +350,19 @@ fn player_collision_system(_delta : Double) -> Unit {
       // 只有当骷髅不在受伤状态时才能伤害玩家
       if skeleton.hurt_timer <= 0.0 {
         if collision.direction[Y] > 0.0 {
+          // 踩踏攻击 - 始终有效
           skeleton.is_hurt = true
           skeleton.hurt_timer = 60.0
           skeleton.health -= 50 // 踩踏伤害
           guard @velocity.velocities.get(game_state.player) is Some(velocity)
           @velocity.velocities[game_state.player] = velocity.0.update(Y, -BUMP_V)
         } else {
-          hurt_player()
+          // 侧面碰撞 - 翻滚时可以穿过敌人
+          if !(game_state.player_state is Roll) {
+            hurt_player()
+          } else {
+            println("🌀 翻滚穿过敌人！")
+          }
         }
       }
     }
@@ -413,8 +427,32 @@ fn player_state_system(delta : Double) -> Unit {
         player_roll_animation,
         transform~,
       )
+      
+      // 翻滚时给玩家一个向前的速度
+      new_velocity_x = match game_state.direction {
+        Direction2::Right => ROLL_SPEED
+        Direction2::Left => -ROLL_SPEED
+      }
+      
+      // 翻滚时修改碰撞掩码，让玩家不会与敌人发生物理碰撞
+      @collision.colliders.set(
+        game_state.player,
+        @collision.Collider::new(
+          @collision.CollisionMask::new([terrain_collision_layer]) // 只与地形碰撞，忽略敌人
+        )
+      )
+      
       if @sprite.is_animation_finished(game_state.player) {
         game_state.player_state = PlayerState::Idle
+        // 翻滚结束，恢复正常的碰撞掩码
+        @collision.colliders.set(
+          game_state.player,
+          @collision.Collider::new(
+            @collision.CollisionMask::new([
+              terrain_collision_layer, enemy_collision_layer,
+            ])
+          )
+        )
       }
     }
     Attack => {
@@ -465,8 +503,17 @@ fn player_state_system(delta : Double) -> Unit {
         game_state.roll_count += 1
         if game_state.roll_count == 1 {
           game_state.player_state = PlayerState::Crouch
-        } else if game_state.roll_count == 2 {
+        } else if game_state.roll_count == 2 && game_state.roll_cooldown <= 0.0 {
+          // 如果玩家正在移动，翻滚会朝移动方向进行
+          if @inputs.is_pressed(@inputs.ArrowLeft) || @inputs.is_pressed(@inputs.KeyA) {
+            game_state.direction = Direction2::Left
+          } else if @inputs.is_pressed(@inputs.ArrowRight) || @inputs.is_pressed(@inputs.KeyD) {
+            game_state.direction = Direction2::Right
+          }
+          
           game_state.player_state = PlayerState::Roll
+          game_state.roll_cooldown = 90.0 // 1.5秒冷却时间 (90帧 @ 60fps)
+          
           if game_state.volume_on {
             @audio.play_audio("sounds/roll.wav")
           }
