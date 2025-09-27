@@ -11,7 +11,7 @@ let player_magic_attack_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let player_death_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Death.png",
+    "asserts/Colour2/NoOutline/120x80_PNGSheets/_Death.png",
     10,
     width=120.0,
     height=80.0,
@@ -23,7 +23,7 @@ let player_death_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let player_idle_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour1/NoOutline/120x80_PNGSheets/_Idle.png",
+    "asserts/Colour1/NoOutline/120x80_PNGSheets/_Idle.png",
     10,
     width=120.0,
     height=80.0,
@@ -35,7 +35,7 @@ let player_idle_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let player_crouch_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_CrouchAll.png",
+    "asserts/Colour2/NoOutline/120x80_PNGSheets/_CrouchAll.png",
     3,
     width=120.0,
     height=80.0,
@@ -47,7 +47,7 @@ let player_crouch_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let player_roll_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Roll.png",
+    "asserts/Colour2/NoOutline/120x80_PNGSheets/_Roll.png",
     12,
     width=120.0,
     height=80.0,
@@ -59,7 +59,7 @@ let player_roll_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let player_attack_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Attack.png",
+    "asserts/Colour2/NoOutline/120x80_PNGSheets/_Attack.png",
     4,
     width=120.0,
     height=80.0,
@@ -71,7 +71,7 @@ let player_attack_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let player_attack2_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Attack2.png",
+    "asserts/Colour2/NoOutline/120x80_PNGSheets/_Attack2.png",
     6,
     width=120.0,
     height=80.0,
@@ -83,7 +83,7 @@ let player_attack2_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let player_run_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Fall.png",
+    "asserts/Colour2/NoOutline/120x80_PNGSheets/_Fall.png",
     10,
     width=120.0,
     height=80.0,
@@ -95,7 +95,7 @@ let player_run_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let player_fall_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour1/NoOutline/120x80_PNGSheets/_Fall.png",
+    "asserts/Colour1/NoOutline/120x80_PNGSheets/_Fall.png",
     3,
     width=120.0,
     height=80.0,
@@ -107,7 +107,7 @@ let player_fall_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let player_hit_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Hit.png",
+    "asserts/Colour2/NoOutline/120x80_PNGSheets/_Hit.png",
     1,
     width=120.0,
     height=80.0,
@@ -119,7 +119,7 @@ let player_hit_animation : @sprite.Animation = @sprite.Animation::new(
 ///|
 let player_jump_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
-    "/asserts/Colour2/NoOutline/120x80_PNGSheets/_Jump.png",
+    "asserts/Colour2/NoOutline/120x80_PNGSheets/_Jump.png",
     3,
     width=120.0,
     height=80.0,
