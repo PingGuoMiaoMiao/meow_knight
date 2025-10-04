@@ -7,12 +7,13 @@ struct GameState {
   result_box : @sprite.Text
   score_box : @sprite.Text
   health_box : @sprite.Text
-  volume_on : Bool
+  volume_on : Bool  // 改回不可变
   mut health : Int
   mut hurt_timer : Double
   mut attack_hit_count : Int
   mut roll_count : Int
   mut roll_cooldown : Double
+  mut last_down_press_time : Double  // 记录上次按下蹲键的时间
 }
 
 ///|
@@ -38,6 +39,7 @@ let game_state : GameState = {
   attack_hit_count: 0,
   roll_count: 0,
   roll_cooldown: 0.0,
+  last_down_press_time: -999.0,  // 初始化为很久以前
 }
 
 ///|
@@ -48,6 +50,9 @@ enum Direction2 {
 
 ///|
 const ATTACK_V : Double = 180.0
+
+///|
+const DOUBLE_TAP_WINDOW : Double = 20.0  // 双击时间窗口（20帧 ≈ 0.33秒）
 
 ///|
 fn hurt_player() -> Unit {
@@ -70,10 +75,10 @@ fn hurt_player() -> Unit {
 ///|
 fn set_score(score : Int) -> Unit {
   game_state.score = score
-  game_state.score_box.content = "Score: " + game_state.score.to_string()
+  update_score(score)  // 使用新的UI更新函数
 }
 
 ///|
 fn update_health_display() -> Unit {
-  game_state.health_box.content = "HP: " + game_state.health.to_string()
+  update_health(game_state.health)  // 使用新的UI更新函数
 }

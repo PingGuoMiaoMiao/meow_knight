@@ -3,8 +3,8 @@ let skeleton_idle_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "asserts/Monsters_Creatures_Fantasy/Skeleton/Idle.png",
     4,
-    width=105,
-    height=210,
+    width=150,
+    height=150,
   ),
   loop_=true,
   fps=12,
@@ -15,8 +15,8 @@ let skeleton_walk_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "asserts/Monsters_Creatures_Fantasy/Skeleton/Walk.png",
     4,
-    width=105,
-    height=210,
+    width=150,
+    height=150,
   ),
   loop_=true,
   fps=12,
@@ -27,8 +27,8 @@ let skeleton_death_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "asserts/Monsters_Creatures_Fantasy/Skeleton/Death.png",
     4,
-    width=105,
-    height=210,
+    width=150,
+    height=150,
   ),
   loop_=false,
   fps=1,
@@ -39,8 +39,8 @@ let skeleton_attack_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "asserts/Monsters_Creatures_Fantasy/Skeleton/Attack.png",
     8,
-    width=105,
-    height=210,
+    width=150,
+    height=150,
   ),
   loop_=false,
   fps=12,
@@ -51,8 +51,8 @@ let skeleton_shield_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "asserts/Monsters_Creatures_Fantasy/Skeleton/Shield.png",
     4,
-    width=105,
-    height=210,
+    width=150,
+    height=150,
   ),
   loop_=false,
   fps=12,
@@ -63,11 +63,11 @@ let skeleton_take_hit_animation : @sprite.Animation = @sprite.Animation::new(
   @sprite.frames_from_atlas(
     "asserts/Monsters_Creatures_Fantasy/Skeleton/TakeHit.png",
     4,
-    width=105,
-    height=210,
+    width=150,
+    height=150,
   ),
   loop_=false,
-  fps=1,
+  fps=8,
 )
 
 ///|
@@ -108,7 +108,7 @@ fn add_enemy(pos : @math.Vec2D) -> Unit {
   @position.positions.set(entity, pos)
   @collision.shapes.set(
     entity,
-    Rect(size=@math.Vec2D(120.0, 80.0), offset=@math.Vec2D(70.0, 0.0)),
+    Rect(size=@math.Vec2D(64.0, 80.0), offset=@math.Vec2D(43.0, 35.0)),
   )
   @collision.collision_layers.set(entity, enemy_collision_layer)
   @collision.colliders.set(
@@ -131,9 +131,15 @@ fn add_enemy(pos : @math.Vec2D) -> Unit {
 
 /// 静态骷髅AI - 怪物不移动，只处理受伤和死亡
 ///|
-fn skeleton_ai_system(_delta : Double) -> Unit {
+fn skeleton_ai_system(delta : Double) -> Unit {
   for e, skeleton in skeletons {
     guard e.is_alive() else { continue }
+    
+    // 添加重力系统
+    guard @velocity.velocities.get(e) is Some(velocity) else { continue }
+    let mut new_velocity_y = velocity.0[Y]
+    new_velocity_y += 1800.0 * delta  // 使用和 player 相同的重力常数
+    @velocity.velocities[e] = @math.Vec2D(velocity.0[X], new_velocity_y)
     
     // 更新受伤计时器
     if skeleton.hurt_timer > 0.0 {

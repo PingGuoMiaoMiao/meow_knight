@@ -20,3 +20,9 @@ let terrain_collision_layer : @collision.CollisionLayer = @collision.CollisionLa
 
 ///|
 let enemy_collision_layer : @collision.CollisionLayer = @collision.CollisionLayer::new()
+
+///|
+let cat_collision_layer : @collision.CollisionLayer = @collision.CollisionLayer::new()
+
+///|
+let unknown_collision_layer : @collision.CollisionLayer = @collision.CollisionLayer::new()
