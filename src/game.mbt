@@ -1,4 +1,11 @@
 ///|
+enum Scene {
+  Level1     // 第一关
+  Level2     // 第二关（击败Older后）
+  // 可以添加更多关卡
+} derive(Eq, Show)
+
+///|
 struct GameState {
   player : @system.Entity
   mut player_state : PlayerState
@@ -14,6 +21,9 @@ struct GameState {
   mut roll_count : Int
   mut roll_cooldown : Double
   mut last_down_press_time : Double  // 记录上次按下蹲键的时间
+  mut current_scene : Scene
+  mut scene_transition : Bool  // 是否正在场景切换
+  mut scene_transition_timer : Double  // 场景切换计时器
 }
 
 ///|
@@ -40,6 +50,9 @@ let game_state : GameState = {
   roll_count: 0,
   roll_cooldown: 0.0,
   last_down_press_time: -999.0,  // 初始化为很久以前
+  current_scene: Scene::Level1,  // 从第一关开始
+  scene_transition: false,       // 初始不在切换状态
+  scene_transition_timer: 0.0,   // 场景切换计时器初始值
 }
 
 ///|

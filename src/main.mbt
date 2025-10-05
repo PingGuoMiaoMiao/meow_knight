@@ -24,6 +24,7 @@ fn main {
   .add_system(silme_ai_system)
   .add_system(cat_ai_system)
   .add_system(sprite_ai_system)
+  .add_system(scene_transition_system)  // 添加场景切换检测系统
   .run()
 }
 
@@ -53,4 +54,9 @@ fn dialogue_input_system(_delta : Double) -> Unit {
       }
     }
   }
+}
+
+///| 场景切换检测系统 - 检查是否所有 Older 都被击败了
+fn scene_transition_system(_delta : Double) -> Unit {
+  check_scene_transition()
 }

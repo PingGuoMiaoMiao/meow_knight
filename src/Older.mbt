@@ -74,7 +74,7 @@ enum OlderState {
 ///|
 let olders : Map[@system.Entity, Older] = Map::new()
 
-fn add_Older(pos : @math.Vec2D) -> Unit{
+fn add_Older(pos : @math.Vec2D) -> @system.Entity {
   let entity = @system.Entity::new()
   let older_sprite = @sprite.Sprite::from_animation(
     older_idle_animation, 10,
@@ -103,6 +103,8 @@ fn add_Older(pos : @math.Vec2D) -> Unit{
     has_attacked: false,
     has_talked: false,  // 初始未对话
   }
+  
+  entity  // 返回创建的实体
 }
 
 fn older_ai_system(delta : Double) -> Unit{
@@ -181,6 +183,10 @@ fn older_ai_system(delta : Double) -> Unit{
       
       // 显示死亡对话
       show_dialogue("Older", "原来是这样吗...\n看来喵喵公主有救了", Some(older_idle_animation))
+      
+      // 从场景切换跟踪系统中移除
+      older_entities.remove(e)
+      println("💀 Older 已死亡，从场景切换跟踪系统中移除")
       
       e.destroy()
       olders.remove(e)

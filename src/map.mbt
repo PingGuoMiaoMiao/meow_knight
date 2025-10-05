@@ -21,6 +21,61 @@ let unknown_blocks : Map[@system.Entity, UnknownBlock] = Map::new()
 ///|
 let coins : Map[@system.Entity, Bool] = Map::new()  // 存储所有金币实体
 
+///|
+let older_entities : Map[@system.Entity, Bool] = Map::new()  // 存储所有Older实体
+
+///|
+pub fn check_scene_transition() -> Unit {
+  // 检查是否所有 Older 都被击败了
+  if !game_state.scene_transition {
+    // 调试信息：显示当前状态
+    println("🔍 场景切换检查 - older_entities 是否为空: \{older_entities.is_empty()}")
+    println("🔍 当前场景: \{game_state.current_scene}")
+    
+    // 简单检查：如果 older_entities 为空，说明所有 Older 都被击败了
+    if older_entities.is_empty() && game_state.current_scene == Scene::Level1 {
+      println("🎉 所有 Older 都被击败了！准备切换到下一关...")
+      game_state.scene_transition = true
+      game_state.scene_transition_timer = 120.0  // 2秒后切换（60fps * 2）
+    }
+  }
+  
+  // 处理场景切换计时器
+  if game_state.scene_transition && game_state.scene_transition_timer > 0.0 {
+    game_state.scene_transition_timer = game_state.scene_transition_timer - 1.0
+    println("⏰ 场景切换倒计时: \{game_state.scene_transition_timer}")
+    if game_state.scene_transition_timer <= 0.0 {
+      transition_to_next_scene()
+    }
+  }
+}
+
+///|
+fn transition_to_next_scene() -> Unit {
+  match game_state.current_scene {
+    Scene::Level1 => {
+      println("🚪 切换到第二关！")
+      game_state.current_scene = Scene::Level2
+      load_level2()  // 现在这个函数在 map2.mbt 中定义
+    }
+    Scene::Level2 => {
+      println("🏆 游戏通关！")
+      // 可以添加通关逻辑
+    }
+  }
+  game_state.scene_transition = false
+}
+
+///|
+fn clear_current_scene() -> Unit {
+  // 简化清除逻辑 - 只清空集合，让垃圾回收处理实体
+  older_entities.clear()
+  coins.clear()
+  unknown_blocks.clear()
+  println("🧹 当前场景已清除")
+}
+
+///|
 fn add_Unknown(pos : @math.Vec2D, sprite_id : String) -> Unit {
   let src_pos: @math.Vec2D = match sprite_id {
     "43" => @math.Vec2D(16.0 * 4, 16.0 * 5)
@@ -313,7 +368,9 @@ fn generate_map() -> Unit {
   if !olders.is_empty() {
     let pos = tile_to_vec2d(olders[0], tilemap.tile_size)
     println("👴 添加 Older，放在 stone 上面")
-    add_Older(@math.Vec2D(pos[X] + 200.0, 400.0 - 96.0))  // 400是stone的Y位置，96是Older的高度
+    let older_entity = add_Older(@math.Vec2D(pos[X] + 200.0, 400.0 - 96.0))  // 400是stone的Y位置，96是Older的高度
+    // 注册到场景切换系统中，用于检测是否全部被击败
+    older_entities.set(older_entity, true)
   }
 
   let sprites_tiles = tilemap.get_tiles("Sprites")
