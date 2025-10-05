@@ -70,6 +70,7 @@ fn add_platform(pos : @math.Vec2D, sprite_id : String) -> Unit {
   // 移除碰撞体积 - Platform 现在是装饰性的
 }
 
+
 ///|
 fn add_grass(pos : @math.Vec2D, sprite_id : String) -> Unit {
   let src_pos = match sprite_id {
@@ -248,7 +249,19 @@ fn generate_map() -> Unit {
   let world_width = tilemap.map_width.to_double() * tilemap.tile_size.to_double()
   let world_height = tilemap.map_height.to_double() * tilemap.tile_size.to_double()
   
-  // 背景装饰图片已移除
+  // 添加背景图片
+  let background = @system.Entity::new()
+  let background_sprite = @sprite.Sprite::from_animation(
+    @sprite.Animation::single_frame(
+      "asserts1/Background/map.png",
+      @math.Vec2D(world_width, world_height),
+      offset=@math.Vec2D::zero(),
+    ),
+    0,  // 最低渲染层级，确保在背景
+  )
+  @sprite.sprites.set(background, background_sprite)
+  @position.positions.set(background, @math.Vec2D::zero())
+  println("🖼️ 添加背景图片: asserts1/Background/map.png (尺寸: \{world_width}x\{world_height})")
   
   @camera.set_limits(top=0.0, bottom=world_height, left=0.0, right=world_width)
   
